@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start-sb": "nx storybook ui"
+    "start-sb": "nx storybook ui",
+    "build-sb": "nx build-storybook ui"
   },
   "private": true,
   "devDependencies": {
