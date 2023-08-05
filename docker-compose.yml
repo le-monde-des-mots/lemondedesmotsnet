@@ -1,0 +1,56 @@
+secrets:
+  db_root_pwd:
+    file: secrets/db_root_pwd.txt
+  db_user_pwd:
+    file: secrets/db_user_pwd.txt
+  caasdoor_conf:
+    file: secrets/casdoor-dev.conf
+
+networks:
+  lmdm_net:
+    driver: bridge
+
+volumes:
+  db_vol: {}
+
+services:
+  db:
+    image: mariadb:latest
+    volumes:
+      - db_vol:/var/lib/mysql
+    environment:
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      MARIADB_DATABASE: lmdm_db
+      MARIADB_USER: lmdm_db_user
+      MARIADB_PASSWORD_FILE: /run/secrets/db_password
+      MARIADB_MYSQL_LOCALHOST_USER: true
+    secrets:
+      - source: db_root_pwd
+        target: /run/secrets/db_root_password
+      - source: db_user_pwd
+        target: /run/secrets/db_password
+    healthcheck:
+      test:
+        [
+          'CMD',
+          '/usr/local/bin/healthcheck.sh',
+          '--su-mysql',
+          '--connect',
+          '--innodb_initialized',
+        ]
+    networks:
+      - lmdm_net
+    ports:
+      - 3306:3306
+
+  casdoor:
+    image: casbin/casdoor:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./secrets/casdoor-dev.conf:/conf/app.conf
+    ports:
+      - 8000:8000
+    networks:
+      - lmdm_net
